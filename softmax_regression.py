@@ -1,10 +1,17 @@
 import numpy as np
-import time
+
+
+def encode_label(label):
+    label = np.array(label)
+    classes = len(set(label))
+    encoded = np.zeros((label.shape[0], classes))
+    for i in range(label.shape[0]):
+        encoded[i][label[i] - 1] = 1
+    return encoded
 
 
 def softmax(z):
     """
-    :param index: index of the element that match the label
     :param z: input vector
     :return: softmax(z)
     """
@@ -12,39 +19,27 @@ def softmax(z):
     return np.exp(z) / np.sum(np.exp(z))
 
 
-def log_likelihood(data, coef, label):
+def gradient_log_likelihood(train_data, train_label, coef, lamda=0.0001):
     """
     Calculate hypothesis
-    :param data: Training data - numpy matrix
+    :param train_data:
+    :param train_label:
     :param coef: The matrix parameters of our hypothesis
-    :param label: Training label - numpy vector
-    :return: Output of log-likelihood
+    :param lamda: Regularization
+    :return: gradient of log-likelihood with respect to coef
     """
-    loss = [np.log10(softmax(np.matmul(np.transpose(coef), data[:, i]))[label[i]])
-            for i in range(data.shape[1])]
-    return -sum(loss)
+    train_label = encode_label(train_label)
+    n = train_data.shape[0]
+    gradient = np.zeros((coef.shape[0], coef.shape[1]))
+    for i in range(n):
+        data = train_data[i].reshape(train_data[i].shape[0], 1)
+        error = (softmax(np.matmul(coef, train_data[i])) - train_label[i]).reshape(train_label.shape[1], 1)
+        gradient = gradient + np.transpose(np.matmul(data, error.T))
+    gradient = (gradient / n) + lamda * coef
+    return gradient
 
 
-def gradient_descent(data, label, step):
-    eps = 0.000001
-    number_of_classes = len(set(label))
-    number_of_features = data.shape[0]
-    coef = np.ones((number_of_features, number_of_classes))
-    gradient = 1
-    iteration = 0
-    tik = time.time()
-    while abs(gradient) > 0.0001:
-        # for i in range(100):
-        iteration += 1
-        prev_gradient = gradient
-        gradient = (log_likelihood(data, coef + eps, label) - log_likelihood(data, coef, label)) / eps
-        if prev_gradient * gradient < 0:
-            step = step / 2
-        if step < eps:
-            eps = eps / 2
-        coef = coef - step * gradient
-    tok = time.time()
-    print("We reached gradient:", str(gradient), "in ", str(iteration), "iteration", "and in",
-          tok - tik, "seconds")
-    return coef
-
+def predict(test_data, coef):
+    predicted_label = [np.argmax(softmax(np.matmul(coef, test_data[i]))) + 1  # Our label are started from 1
+                       for i in range(test_data.shape[0])]
+    return predicted_label
