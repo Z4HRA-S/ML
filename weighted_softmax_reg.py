@@ -48,15 +48,14 @@ class WSMRegression:
         gradient = np.zeros(coef.shape)
         for i in range(n):
             data = self.train_data[i].reshape(self.train_data[i].shape[0], 1)
-            error = (train_label[i] - self.__softmax(np.matmul(coef, self.train_data[i]))).reshape(
-                self.train_label.shape[1], 1)
+            error = (train_label[i] - self.__softmax(np.matmul(coef, self.train_data[i]))).reshape(train_label.shape[1],1)
             gradient = gradient + self.weight[i] * np.transpose(np.matmul(data, error.T))
         gradient = gradient + self.lamda * coef
         return gradient
 
     def predict(self, test_data):
         classes = len(set(self.train_label))
-        features = self.train_label.shape[1]
+        features = self.train_data.shape[1]
         predicted = []
         for t in test_data:
             self.__set_weight(t)

@@ -40,14 +40,13 @@ class SoftMaxRegression:
         gradient = np.zeros(coef.shape)
         for i in range(n):
             data = self.train_data[i].reshape(self.train_data[i].shape[0], 1)
-            error = (train_label[i] - self.softmax(np.matmul(coef, self.train_data[i]))).reshape(
-                self.train_label.shape[1], 1)
+            error = (train_label[i] - self.softmax(np.matmul(coef, self.train_data[i]))).reshape(train_label.shape[1], 1)
             gradient = gradient + np.transpose(np.matmul(data, error.T))
         gradient = gradient + self.lamda * coef
         return gradient
 
     def predict(self, test_data):
-        features = self.train_data.shape[1] - 1
+        features = self.train_data.shape[1]
         classes = len(set(self.train_label))
         coef = gr.gradient_descent(self.gradient_log_likelihood, coef_shape=(classes, features))
         predicted_label = [np.argmax(self.softmax(np.matmul(coef, test_data[i]))) + 1  # Our label are started from 1
