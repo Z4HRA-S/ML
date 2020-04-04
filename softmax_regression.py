@@ -39,7 +39,7 @@ class SoftMaxRegression:
         n = self.train_data.shape[0]
         gradient = np.zeros(coef.shape)
         for i in range(n):
-            data = self.train_data[i].reshape(self.train_data[i].shape[0], 1)
+            data = self.train_data[i].reshape(self.train_data.shape[1], 1)
             error = (train_label[i] - self.softmax(np.matmul(coef, self.train_data[i]))).reshape(train_label.shape[1], 1)
             gradient = gradient + np.transpose(np.matmul(data, error.T))
         gradient = gradient + self.lamda * coef
