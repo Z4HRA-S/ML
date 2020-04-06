@@ -4,6 +4,7 @@ MSRC/
 .pytest_cache/
 main.py
 test.py
+bayesian_output.txt
 pie.txt
 
 # Created by https://www.gitignore.io/api/git,venv,python,pycharm+all

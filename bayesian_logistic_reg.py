@@ -61,8 +61,8 @@ class BLRegression:
         return coef, s_n
 
     def predict(self, test_data):
-        w_MAP, s_n = self.train_newton_method()
-        #w_MAP, s_n = self.train_gradient_descent()
+        #w_MAP, s_n = self.train_newton_method()
+        w_MAP, s_n = self.train_gradient_descent()
         predicted = []
         for test in test_data:
             test = test.reshape(test.shape[0], 1)
