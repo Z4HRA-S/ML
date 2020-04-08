@@ -15,6 +15,4 @@ def read(path):
     return data
 
 
-def split(data, k=5):
-    np.random.shuffle(data)
-    return np.array_split(data, k)
+
