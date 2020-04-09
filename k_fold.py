@@ -14,7 +14,6 @@ def score(predicted_label, test_label):
         actual = int(label[1] - 1)
         confusion[predicted][actual] += 1
 
-    print(confusion)
     avg_precision, avg_recall, avg_specificity, avg_f1 = 0, 0, 0, 0
     for c in classes:
         index = int(c - 1)
