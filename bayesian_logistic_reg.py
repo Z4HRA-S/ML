@@ -13,10 +13,12 @@ class BLRegression:
         self.train_label = label
         self.mean = np.mean(train_data, axis=0)
         self.cov_matrix = np.linalg.inv(np.cov(train_data.T))
+        self.set_param()
 
-    def set_param(self, mean, cov_matrix):
-        self.mean = mean
-        self.cov_matrix = cov_matrix
+    def set_param(self, gr_initial=1, gr_step=1, gr_iter=1000):
+        self.gr_initial = gr_initial
+        self.gr_step = gr_step
+        self.gr_iter = gr_iter
 
     def __sigmoid(self, z):
         """
@@ -31,36 +33,40 @@ class BLRegression:
     def __train_newton_method(self):
         n = self.train_data.shape[1]
         label = self.train_label
-        coef = np.ones((n, 1))
-        prev = np.zeros((n, 1))
+        coef = np.ones((n,))
+        prev = 100 * np.ones((n,))
         s_n = np.ones((n, n))
-        gradient = np.ones((n, 1))
+
         # train phase: Newton-Raphson method for finding coef
-        while np.max(np.abs(prev - coef)) > 0.1:
-            # while np.max(np.abs(gradient)) > 0.1:
+        while np.max(np.abs(prev - coef)) > 10:
             prev = coef
             model = np.matmul(coef.T, self.train_data.T)
             logistic_model = np.array([self.__sigmoid(m) for m in model], dtype='float64')
-            error = (label - logistic_model).reshape(len(label), 1)
-            gradient = np.matmul(self.cov_matrix, (coef - self.mean)) - np.matmul(self.train_data.T, error)
-            s_diag = np.diag([s * (1 - s) for s in logistic_model[0]])
+            error = label - logistic_model
+            gradient = np.matmul(self.cov_matrix, (coef - self.mean),
+                                 dtype=np.float128) + np.matmul(self.train_data.T, error.T, dtype=np.float128)
+
+            s_diag = np.diag([s * (1 - s) for s in logistic_model])
             hessian = self.cov_matrix + np.matmul(np.matmul(self.train_data.T, s_diag), self.train_data)
             coef = coef - np.matmul(np.linalg.inv(hessian), gradient)
             s_n = hessian
-        # print(coef[:5].T)
 
         return coef, s_n
 
     def __gradient(self, theta):
         model = np.matmul(theta.T, self.train_data.T, dtype=np.float128)
         logistic_model = np.array([self.__sigmoid(m) for m in model], dtype=np.float128)
-        error = (logistic_model - self.train_label)
+        error = logistic_model - self.train_label
         grad = np.matmul(self.cov_matrix, (theta - self.mean),
                          dtype=np.float128) + np.matmul(self.train_data.T, error.T, dtype=np.float128)
+
         return grad
 
     def __train_gradient_descent(self):
-        coef = gr.gradient_descent(self.__gradient, (self.train_data.shape[1],), iteration=1000, step=1)
+        coef = gr.gradient_descent(self.__gradient, (self.train_data.shape[1],),
+                                   initial=self.gr_initial,
+                                   iteration=self.gr_iter,
+                                   step=self.gr_step)
         model = np.matmul(coef.T, self.train_data.T)
         logistic_model = np.array([self.__sigmoid(m) for m in model], dtype='float64')
         s_diag = np.diag([s * (1 - s) for s in logistic_model])
@@ -68,7 +74,7 @@ class BLRegression:
         return coef, s_n
 
     def __predict(self, test_data):
-        # w_MAP, s_n = self.train_newton_method()
+        #w_MAP, s_n = self.__train_newton_method()
         w_MAP, s_n = self.__train_gradient_descent()
         predicted = []
         for test in test_data:
