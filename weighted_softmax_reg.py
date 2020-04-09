@@ -37,10 +37,7 @@ class WSMRegression:
         """
         z = -1 * z
         # normalize the vector to avoid overflow in exp
-        if np.max(z) >= 0:
-            z = z - np.max(z)
-        else:
-            z = z + np.max(z)
+        z = z - np.max(z)
         return np.exp(z) / np.sum(np.exp(z))
 
     def __gradient_log_likelihood(self, coef):
@@ -67,7 +64,7 @@ class WSMRegression:
         predicted = []
         for t in test_data:
             self.__set_weight(t)
-            coef = gr.gradient_descent(self.__gradient_log_likelihood, (classes, features))
+            coef = gr.gradient_descent(self.__gradient_log_likelihood, (classes, features), mute=True)
             label = np.argmax(self.__softmax(np.matmul(coef, t))) + 1
             predicted.append(label)
         return predicted
