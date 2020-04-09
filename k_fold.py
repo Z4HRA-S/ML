@@ -37,7 +37,8 @@ def score(predicted_label, test_label):
         avg_precision += precision * support
         avg_recall += recall * support
         avg_specificity += (tn / (tn + fp)) * support
-        avg_f1 += (2 * precision * recall / (precision + recall)) * support
+        if precision != 0 or recall != 0:
+            avg_f1 += (2 * precision * recall / (precision + recall)) * support
 
     # calculate weighted average of scores
     avg_precision = avg_precision / len(test_label)
@@ -50,7 +51,10 @@ def score(predicted_label, test_label):
             "recall": avg_recall, "specificity": avg_specificity}
 
 
-def k_fold(model, data, data_set_name="", k=5, split=True):
+def k_fold(model, data, model_name="NOT_SET", data_set_name="", k=5, split=True):
+    if model_name == "NOT_SET":
+        model_name = model.name
+
     if split:
         data = split_data(data, k)
     scores = []
@@ -61,7 +65,7 @@ def k_fold(model, data, data_set_name="", k=5, split=True):
         test_data = data[i]
         test_label = test_data[:, -1]
         test_data = test_data[:, :-1]
-        print("Running ", model.name, "for ", data_set_name, "in", i, "th fold:")
+        print("Running ", model_name, "for ", data_set_name, "in", i, "th fold:")
         model.fit(train_data, train_label)
         predicted = model.predict(test_data)
         result = score(predicted, test_label)
@@ -75,5 +79,5 @@ def k_fold(model, data, data_set_name="", k=5, split=True):
         avg_score[s] = sum([scores[i][s] for i in range(k)]) / k
 
     avg_score["data"] = data_set_name
-    avg_score["model"] = model.name
+    avg_score["model"] = model_name
     return avg_score

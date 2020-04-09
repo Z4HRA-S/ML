@@ -8,6 +8,8 @@ def to_numpy(data):
     data_matrix = np.concatenate((features, labels), axis=1)
     return data_matrix
 
+def map_label():
+    pass
 
 def read(path):
     data = loadmat(path)
