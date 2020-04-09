@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.stats
 
 
 class GNB:
@@ -9,51 +10,29 @@ class GNB:
     def fit(self, train_data, train_label):
         self.train_data = train_data
         self.train_label = train_label
-        classes = len(set(train_label))
-        self.__mean, self.__var = self.__train()
 
-        prior = np.zeros((classes,))
-        for label in train_label:
-            i = int(label - 1)
-            prior[i] += 1
-        self.__prior = prior / (len(train_label))
+    def separate_class(self):
+        classes = set(self.train_label)
+        separated = [[] for i in range(len(classes))]
 
-    def __encode_label(self, label):
-        label = np.array(label)
-        classes = len(set(label))
-        encoded = np.zeros((label.shape[0], classes))
-        for i in range(label.shape[0]):
-            encoded[i][int(label[i] - 1)] = 1
-        return encoded
+        for i in range(self.train_data.shape[0]):
+            separated[int(self.train_label[i]) - 1].append(self.train_data[i])
+        return separated
 
     def __train(self):
-        classes = len(set(self.train_label))
-        features = self.train_data.shape[1]
-        label = self.__encode_label(self.train_label)
-
-        n_k = np.zeros((classes,))
-        for lb in self.train_label:
-            i = int(lb - 1)
-            n_k[i] += 1
-
-        mean = np.matmul(self.train_data.T, label, dtype=np.float128) / n_k
-        variance = np.zeros((features, classes), dtype=np.float128)
-        for i in range(features):
-            for k in range(classes):
-                variance[i][k] = sum([(self.train_data[n][i] - mean[i][k]) ** 2 * label[n][k]
-                                      for n in range(len(self.train_label))])
-        variance = variance / n_k
-        return mean, variance
+        separated = self.separate_class()
+        mean = np.array([np.mean(s, axis=0) for s in separated])
+        std = np.array([np.std(s, axis=0) for s in separated])
+        prior = [len(data) / self.train_data.shape[0] for data in separated]
+        return mean, std, prior
 
     def predict(self, test_data):
-        classes = len(set(self.train_label))
-        features = self.train_data.shape[1]
+        mean, std, prior = self.__train()
+        gaussian = lambda x, mu, sigma: scipy.stats.norm(mu, sigma).pdf(x)
         predicted = []
-        guassian = lambda x, mu, sigma: np.exp((x - mu / sigma) ** 2 / -2, dtype=np.float128) / (
-                sigma * np.sqrt(2 * np.pi))
-
         for t in test_data:
-            label = np.argmax([self.__prior[k] * np.prod([guassian(t, self.__mean[i][k], self.__var[i][k])
-                                                   for i in range(features)], dtype="float64") for k in range(classes)])
+            prob = np.log(prior) + np.sum(np.log(gaussian(t, mean, std)), axis=1)
+            #prob = prior * np.prod(gaussian(t, mean, std), axis=1)
+            label = np.argmax(prob) + 1
             predicted.append(label)
         return predicted
