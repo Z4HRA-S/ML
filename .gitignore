@@ -1,11 +1,11 @@
 PIE/
 VOC/
 MSRC/
+csv/
 .pytest_cache/
 main.py
-test.py
-output.txt
-pie.txt
+svm.py
+plot.py
 
 # Created by https://www.gitignore.io/api/git,venv,python,pycharm+all
 # Edit at https://www.gitignore.io/?templates=git,venv,python,pycharm+all

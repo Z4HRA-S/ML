@@ -1,5 +1,6 @@
 import numpy as np
 import gradient_descent as gr
+import scipy.special as sci
 
 
 class BLRegression:
@@ -11,16 +12,16 @@ class BLRegression:
         self.train_data = train_data
         self.label = label
         self.train_label = label
-        self.mean = np.mean(train_data, axis=0)
-        self.cov_matrix = np.linalg.inv(np.cov(train_data.T))
+        self.mean = np.zeros((train_data.shape[1],))
+        self.cov_matrix = 0.01*np.eye(train_data.shape[1])
         self.set_param()
 
-    def set_param(self, gr_initial=1, gr_step=1, gr_iter=1000):
+    def set_param(self, gr_initial=1, gr_step=0.001, gr_iter=1000):
         self.gr_initial = gr_initial
         self.gr_step = gr_step
         self.gr_iter = gr_iter
 
-    def __sigmoid(self, z):
+    def _sigmoid(self, z):
         """
         :param z: input scalar
         :return: sigmoid(z)
@@ -30,7 +31,7 @@ class BLRegression:
         else:
             return np.exp(z, dtype=np.float128) / (1 + np.exp(z, dtype=np.float128))
 
-    def __train_newton_method(self):
+    def _train_newton_method(self):
         n = self.train_data.shape[1]
         label = self.train_label
         coef = np.ones((n,))
@@ -41,7 +42,7 @@ class BLRegression:
         while np.max(np.abs(prev - coef)) > 10:
             prev = coef
             model = np.matmul(coef.T, self.train_data.T)
-            logistic_model = np.array([self.__sigmoid(m) for m in model], dtype='float64')
+            logistic_model = np.array([self._sigmoid(m) for m in model], dtype='float64')
             error = label - logistic_model
             gradient = np.matmul(self.cov_matrix, (coef - self.mean),
                                  dtype=np.float128) + np.matmul(self.train_data.T, error.T, dtype=np.float128)
@@ -53,35 +54,36 @@ class BLRegression:
 
         return coef, s_n
 
-    def __gradient(self, theta):
+    def _gradient(self, theta):
         model = np.matmul(theta.T, self.train_data.T, dtype=np.float128)
-        logistic_model = np.array([self.__sigmoid(m) for m in model], dtype=np.float128)
+        logistic_model = np.array([self._sigmoid(m) for m in model], dtype=np.float128)
         error = logistic_model - self.train_label
         grad = np.matmul(self.cov_matrix, (theta - self.mean),
                          dtype=np.float128) + np.matmul(self.train_data.T, error.T, dtype=np.float128)
 
         return grad
 
-    def __train_gradient_descent(self):
-        coef = gr.gradient_descent(self.__gradient, (self.train_data.shape[1],),
+    def _train_gradient_descent(self):
+        coef = gr.gradient_descent(self._gradient, (self.train_data.shape[1],),
                                    initial=self.gr_initial,
                                    iteration=self.gr_iter,
                                    step=self.gr_step)
         model = np.matmul(coef.T, self.train_data.T)
-        logistic_model = np.array([self.__sigmoid(m) for m in model], dtype='float64')
+        logistic_model = np.array([self._sigmoid(m) for m in model], dtype='float64')
         s_diag = np.diag([s * (1 - s) for s in logistic_model])
         s_n = self.cov_matrix + np.matmul(np.matmul(self.train_data.T, s_diag), self.train_data)
+        s_n= np.linalg.inv(s_n)
         return coef, s_n
 
-    def __predict(self, test_data):
-        #w_MAP, s_n = self.__train_newton_method()
-        w_MAP, s_n = self.__train_gradient_descent()
+    def _predict(self, test_data):
+        # w_MAP, s_n = self._train_newton_method()
+        w_MAP, s_n = self._train_gradient_descent()
         predicted = []
         for test in test_data:
             test = test.reshape(test.shape[0], 1)
             mu = np.matmul(w_MAP.T, test)
             sigma = np.matmul(np.matmul(test.T, s_n), test)
-            c1_posterior = self.__sigmoid(1 / np.sqrt(1 + (np.pi * sigma / 8)) * mu)
+            c1_posterior = self._sigmoid(1 / np.sqrt(1 + (np.pi * sigma / 8)) * mu)
             predicted.append(c1_posterior)
             # label = 1 if c1_posterior >= 0.5 else 0
             # predicted.append(label)
@@ -93,7 +95,7 @@ class BLRegression:
         for c in classes:
             self.train_label = [1 if t == c else 0 for t in self.label]
             index = int(c - 1)
-            predicted[index] = self.__predict(test_data)
+            predicted[index] = self._predict(test_data)
 
         predicted = [np.argmax(predicted[:, i]) + 1 for i in range(len(test_data))]
         return predicted

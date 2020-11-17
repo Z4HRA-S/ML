@@ -10,9 +10,9 @@ class Generative:
     def fit(self, train_data, train_label):
         self.train_data = train_data
         self.train_label = train_label
-        self.__coef, self.__bias = self.__train()
+        self.__coef, self.__bias = self._train()
 
-    def __encode_label(self, label):
+    def _encode_label(self, label):
         label = np.array(label)
         classes = len(set(label))
         encoded = np.zeros((label.shape[0], classes))
@@ -20,7 +20,7 @@ class Generative:
             encoded[i][int(label[i] - 1)] = 1
         return encoded
 
-    def __train(self):
+    def _train(self):
         classes = len(set(self.train_label))
         features = self.train_data.shape[1]
         n_k = np.zeros((classes,))
@@ -29,7 +29,7 @@ class Generative:
             n_k[i] += 1
 
         prior = n_k / len(self.train_label)
-        label = self.__encode_label(self.train_label)
+        label = self._encode_label(self.train_label)
 
         mean_k = np.matmul(self.train_data.T, label) / n_k
         cov_matrix = np.zeros((features, features), dtype=np.float64)

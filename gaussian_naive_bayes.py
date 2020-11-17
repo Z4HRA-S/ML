@@ -19,7 +19,7 @@ class GNB:
             separated[int(self.train_label[i]) - 1].append(self.train_data[i])
         return separated
 
-    def __train(self):
+    def _train(self):
         separated = self.separate_class()
         mean = np.array([np.mean(s, axis=0) for s in separated])
         std = np.array([np.std(s, axis=0) for s in separated])
@@ -27,7 +27,7 @@ class GNB:
         return mean, std, prior
 
     def predict(self, test_data):
-        mean, std, prior = self.__train()
+        mean, std, prior = self._train()
         gaussian = lambda x, mu, sigma: scipy.stats.norm(mu, sigma).pdf(x)
         predicted = []
         for t in test_data:
